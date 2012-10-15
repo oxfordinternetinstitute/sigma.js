@@ -1,0 +1,275 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>sigma.js | Parse graph data / use custom events</title>
+  <meta name="description" content="">
+  <meta name="author" content="Alexis Jacomy">
+  <meta name="robots" content="all" />
+
+  <meta name="viewport" content="width=device-width">
+  <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
+  <link rel="icon" type="image/png" href="favicon.ico" />
+  <!--[if IE]><link rel="shortcut icon" type="image/x-icon" href="favicon.ico" /><![endif]-->
+
+  <style type="text/css" media="all">
+    body {
+      padding-top: 60px;
+      padding-bottom: 40px;
+    }
+  </style>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/prettify.css">
+
+  <script src="/js/prettify.js"></script>
+  <script src="sigma.min.js"></script>
+
+</head>
+<body>
+  
+  <div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand sigma-font" href="/">sigma.js</a>
+      <div class="nav-collapse">
+        <ul class="nav">
+          <li><a href="/">Home</a></li>
+          <li><a href="/examples.html">Examples</a></li>
+          <li class="divider-vertical"></li>
+          <li><a href="http://github.com/jacomyal/sigma.js">Github</a></li>
+          <li><a href="http://twitter.com/sigmajs">Twitter</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+    
+  <div class="container">
+    <div class="row">
+  <h2 class="span12" id="post-title">Parse graph data / use custom events</h2>
+  
+  <div class="span12 sigma-parent" id="sigma-example-parent">
+    <div class="sigma-expand" id="sigma-example"></div>
+  </div>
+</div>
+
+<br>
+
+<div class="row">
+  <h4 class="span12">Description</h4>
+  <div class="span12">
+    <p>This example will load and display a GEXF encoded graph. Then, when the users rolls the mouse over a node, it will make each edge grey, except the ones that are linked to the node.</p>
+  </div>
+</div>
+
+<br>
+
+<div class="row">
+  <h4 class="span12">Sources</h4>
+  <div class="span12">
+    <pre id="sigma-example-code" class="prettyprint linenums">
+function init() {
+  // Instanciate sigma.js and customize rendering :
+  var sigInst = sigma.init(document.getElementById('sigma-example')).drawingProperties({
+    defaultLabelColor: '#fff',
+    defaultLabelSize: 14,
+    defaultLabelBGColor: '#fff',
+    defaultLabelHoverColor: '#000',
+    labelThreshold: 6,
+    defaultEdgeType: 'curve',
+	borderSize: 1,//Something other than 0
+    nodeBorderColor: "default",//exactly like this
+    defaultNodeBorderColor: "#000",//Any color of your choice
+    defaultBorderView: "always"//apply the default color to all nodes always (normal+hover)    
+  }).graphProperties({
+    minNodeSize: 0.5,
+    maxNodeSize: 5,
+    minEdgeSize: 1,
+    maxEdgeSize: 1
+  }).mouseProperties({
+    maxRatio: 4
+  });
+
+  // Parse a GEXF encoded file to fill the graph
+  // (requires "sigma.parseGexf.js" to be included)
+  sigInst.parseGexf('les_miserables.gexf');
+
+  // Bind events :
+  var greyColor = '#666';
+  sigInst.bind('overnodes',function(event){
+    var nodes = event.content;
+    var neighbors = {};
+    sigInst.iterEdges(function(e){
+      if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
+        if(!e.attr['grey']){
+          e.attr['true_color'] = e.color;
+          e.color = greyColor;
+          e.attr['grey'] = 1;
+        }
+      }else{
+        e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+        e.attr['grey'] = 0;
+
+        neighbors[e.source] = 1;
+        neighbors[e.target] = 1;
+      }
+    }).iterNodes(function(n){
+      if(!neighbors[n.id]){
+        if(!n.attr['grey']){
+          n.attr['true_color'] = n.color;
+          n.color = greyColor;
+          n.attr['grey'] = 1;
+        }
+      }else{
+        n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+        n.attr['grey'] = 0;
+      }
+    }).draw(2,2,2);
+  }).bind('outnodes',function(){
+    sigInst.iterEdges(function(e){
+      e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+      e.attr['grey'] = 0;
+    }).iterNodes(function(n){
+      n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+      n.attr['grey'] = 0;
+    }).draw(2,2,2);
+  });
+
+  // Draw the graph :
+  sigInst.draw();
+}
+
+if (document.addEventListener) {
+  document.addEventListener("DOMContentLoaded", init, false);
+} else {
+  window.onload = init;
+}
+
+    </pre>
+  </div>
+</div>
+
+<script src="sigma.parseGexf.js"></script><script type="text/javascript">function init() {
+  // Instanciate sigma.js and customize rendering :
+  var sigInst = sigma.init(document.getElementById('sigma-example')).drawingProperties({
+    defaultLabelColor: '#fff',
+    defaultLabelSize: 14,
+    defaultLabelBGColor: '#fff',
+    defaultLabelHoverColor: '#000',
+    labelThreshold: 6,
+    defaultEdgeType: 'curve',
+	borderSize: 1,//Something other than 0    
+    nodeBorderColor: "default",//exactly like this
+    defaultNodeBorderColor: "#FFF",//Any color of your choice
+    defaultBorderView: "always"//apply the default color to all nodes always (normal+hover)        
+  }).graphProperties({
+    minNodeSize: 0.5,
+    maxNodeSize: 5,
+    minEdgeSize: 1,
+    maxEdgeSize: 1
+  }).mouseProperties({
+    maxRatio: 4
+  });
+
+  // Parse a GEXF encoded file to fill the graph
+  // (requires "sigma.parseGexf.js" to be included)
+  sigInst.parseGexf('les_miserables.xml');
+
+  // Bind events :
+  var greyColor = '#666';
+  sigInst.bind('overnodes',function(event){
+    var nodes = event.content;
+    var neighbors = {};
+    sigInst.iterEdges(function(e){
+      if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
+        if(!e.attributes['grey']){
+          e.attributes['true_color'] = e.color;
+          e.color = greyColor;
+          e.attributes['grey'] = 1;
+        }
+      }else{
+        e.color = e.attributes['grey'] ? e.attributes['true_color'] : e.color;
+        e.attributes['grey'] = 0;
+
+        neighbors[e.source] = 1;
+        neighbors[e.target] = 1;
+      }
+    }).iterNodes(function(n){
+      if(!neighbors[n.id]){
+        if(!n.attributes['grey']){
+          n.attributes['true_color'] = n.color;
+          n.color = greyColor;
+          n.attributes['grey'] = 1;
+        }
+      }else{
+        n.color = n.attributes['grey'] ? n.attributes['true_color'] : n.color;
+        n.attributes['grey'] = 0;
+      }
+    }).draw(2,2,2);
+  }).bind('outnodes',function(){
+    sigInst.iterEdges(function(e){
+      e.color = e.attributes['grey'] ? e.attributes['true_color'] : e.color;
+      e.attributes['grey'] = 0;
+    }).iterNodes(function(n){
+      n.color = n.attributes['grey'] ? n.attributes['true_color'] : n.color;
+      n.attributes['grey'] = 0;
+    }).draw(2,2,2);
+  });
+
+  // Draw the graph :
+  sigInst.draw();
+}
+
+if (document.addEventListener) {
+  document.addEventListener("DOMContentLoaded", init, false);
+} else {
+  window.onload = init;
+}
+</script>
+
+<style type="text/css">
+  /* sigma.js context : */
+  .sigma-parent {
+    position: relative;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    background: #222;
+    height: 500px;
+  }
+  .sigma-expand {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+  }
+  .buttons-container{
+    padding-bottom: 8px;
+    padding-top: 12px;
+  }
+</style>
+
+
+    <hr>
+
+<footer class="footer">
+  <p class="pull-right"><a href="#">&#8593; Back to top</a></p>
+  <p>© Alexis Jacomy 2012</p>
+  <p>
+    <span class="sigma-font">sigma.js</span> and this website are distributed under the <a href="/LICENSE.txt" target="_blank">MIT License</a>.
+  </p>
+  <p>
+    You can also take a look at 
+    my <span><a href="http://ofnodesandedges.com" title="ofnodesandedges.com">blog</a></span>, 
+    my <span><a href="http://github.com/jacomyal" title="github.com/jacomyal">github repositories</a></span>, 
+    or my <span><a href="http://twitter.com/jacomyal" title="twitter.com/jacomyal">twitter account</a></span>.
+  </p>
+</footer>
+  </div>
+</body>
+</html>
