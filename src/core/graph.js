@@ -689,7 +689,7 @@ function Graph() {
    */
   function getNodes(ids) {
     var a = ((ids instanceof Array ? ids : [ids]) || []).map(function(id) {
-      return cloneNode(self.nodesIndex[id]);
+		return (self.nodesIndex[id])?cloneNode(self.nodesIndex[id]) : undefined;
     });
 
     return (ids instanceof Array ? a : a[0]);
